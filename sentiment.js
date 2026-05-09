@@ -365,11 +365,42 @@ function renderCharts(data) {
         });
 
         if(charts.mood) charts.mood.destroy();
-        let moodKeys = Object.keys(data.moodCounts).sort((a,b) => data.moodCounts[b] - data.moodCounts[a]);
+        
+        let moodEntries = Object.entries(data.moodCounts).filter(e => e[1] > 0).sort((a,b) => b[1] - a[1]);
+        let moodTreeData = moodEntries.map(e => ({ name: e[0].toUpperCase(), value: e[1] }));
+
         charts.mood = new Chart(document.getElementById('moodChart'), {
-            type: 'bar',
-            data: { labels: moodKeys.map(k => k.toUpperCase()), datasets: [{ data: moodKeys.map(k => data.moodCounts[k]), backgroundColor: '#4472C4', borderRadius: 2 }] },
-            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 30 } }, plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'right', font: {size: 10, weight: 'bold'}, formatter: v => v > 0 ? v : '' } }, scales: { x: { grid: { display: false }, ticks: { display: false } }, y: { grid: { display: false }, ticks: { color: '#ccc', font: {size: 10} } } } }
+            type: 'treemap',
+            data: {
+                datasets: [{
+                    tree: moodTreeData,
+                    key: 'value',
+                    groups: ['name'],
+                    backgroundColor: '#4472C4',
+                    borderColor: '#1a1a1a', 
+                    borderWidth: 2,
+                    labels: {
+                        display: true,
+                        color: '#ffffff',
+                        font: { size: 11, weight: 'bold' },
+                        formatter: (ctx) => ctx.raw.v > 0 ? [ctx.raw.g, ctx.raw.v] : ''
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    datalabels: { display: false }, // Turn off standard datalabels for the treemap
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => items[0].raw.g,
+                            label: (item) => `Responses: ${item.raw.v}`
+                        }
+                    }
+                }
+            }
         });
     }
 }
