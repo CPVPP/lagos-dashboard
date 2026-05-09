@@ -28,17 +28,12 @@
                         textPrimary: '#ffffff',
                         textSecondary: '#aaaaaa',
                         chartBlue: '#4472C4'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
                     }
                 }
             }
         }
     </script>
     
-    <!-- Shared Styles -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="font-sans antialiased flex flex-col h-screen overflow-hidden">
@@ -55,12 +50,12 @@
         <div id="loader-text" class="text-gray-500 font-mono text-xs tracking-[0.1em]">Initializing intelligence data...</div>
     </div>
 
-    <!-- Map Background (Full Bleed) -->
+    <!-- Map Background -->
     <div id="map" class="fixed inset-0 z-0 bg-[#1a1a1a]"></div>
 
     <div class="relative z-10 flex flex-col h-screen pointer-events-none">
         
-        <!-- Switcher Tabs (Glass) -->
+        <!-- Switcher Tabs -->
         <div class="bg-[#111]/80 backdrop-blur border-b border-gray-800 px-6 py-2 flex gap-8 text-[11px] font-mono tracking-widest text-gray-500 shrink-0 pointer-events-auto">
             <a href="index.html" class="hover:text-gray-300 transition pb-1 cursor-pointer">FIELD MONITORING</a>
             <button class="text-accentGreen border-b-2 border-accentGreen pb-1 font-bold cursor-default">SENTIMENT & SAFETY</button>
@@ -80,7 +75,7 @@
             </div>
         </header>
 
-        <!-- KPI BAR -->
+        <!-- KPI BAR (Swapped Composite Safety Index and Tensions Noticed) -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 shrink-0 pointer-events-auto">
             <div class="bg-panelBg/85 backdrop-blur-md rounded-lg p-4 border border-gray-600 shadow-xl flex flex-col justify-center">
                 <span class="text-gray-300 text-sm font-semibold uppercase">Avg Safety Score</span>
@@ -94,15 +89,15 @@
                 <span class="text-3xl font-bold mt-1 text-white drop-shadow" id="kpi-violence">-</span>
             </div>
             <div class="bg-panelBg/85 backdrop-blur-md rounded-lg p-4 border border-gray-600 shadow-xl flex flex-col justify-center">
-                <span class="text-gray-300 text-sm font-semibold uppercase">% Tensions Noticed</span>
-                <span class="text-3xl font-bold mt-1 text-white drop-shadow" id="kpi-tensions">-</span>
-            </div>
-            <div class="bg-panelBg/85 backdrop-blur-md rounded-lg p-4 border border-gray-600 shadow-xl flex flex-col justify-center">
                 <span class="text-gray-300 text-sm font-semibold uppercase">Composite Safety Index</span>
                 <div class="flex items-baseline gap-2 mt-1">
                     <span class="text-3xl font-bold text-accentGreen drop-shadow" id="kpi-composite">-</span>
                     <span class="text-[10px] text-gray-400 uppercase tracking-wider">OUT OF 100</span>
                 </div>
+            </div>
+            <div class="bg-panelBg/85 backdrop-blur-md rounded-lg p-4 border border-gray-600 shadow-xl flex flex-col justify-center">
+                <span class="text-gray-300 text-sm font-semibold uppercase">% Tensions Noticed</span>
+                <span class="text-3xl font-bold mt-1 text-white drop-shadow" id="kpi-tensions">-</span>
             </div>
         </div>
 
@@ -197,8 +192,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-    
-    <!-- Config and App Logic -->
     <script src="config.js"></script>
     <script src="sentiment.js"></script>
 </body>

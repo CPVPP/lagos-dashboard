@@ -13,7 +13,6 @@ let charts = {
     rankingHotspots: null
 };
 
-// Strict Whitelist
 const VALID_LGAS = new Set([
     "agege", "ajeromiifelodun", "alimosho", "amuwoodofin", "apapa",
     "badagry", "epe", "etiosa", "ibejulekki", "ifakoijaiye", "ifakoijaye", 
@@ -28,7 +27,6 @@ function normalizeLGA(name) {
     return normalized;
 }
 
-// Map Choropleth Color (Based on Composite Safety Index 0-100)
 function getSafetyColour(score) {
     if (score >= 75) return '#1a9850'; // Safe
     if (score >= 50) return '#fee08b'; // Moderate
@@ -94,20 +92,20 @@ function processData() {
         const l = lgaMap[normName];
         l.total++;
 
-        // Track Sentiment Aggregates
-        l.sumSafety += (r.safety_score_num || 0);
-        l.sumViol += (r.violence_witnessed_binary || 0);
-        l.sumTens += (r.tensions_noticed_binary || 0);
-        l.sumCalm += (r.is_calm_binary || 0);
+        // FIX: Wrapped in Number() to prevent string '1' from breaking addition
+        l.sumSafety += Number(r.safety_score_num || 0);
+        l.sumViol += Number(r.violence_witnessed_binary || 0);
+        l.sumTens += Number(r.tensions_noticed_binary || 0);
+        l.sumCalm += Number(r.is_calm_binary || 0);
 
         if(r.safety_feeling) l.safetyCounts[r.safety_feeling] = (l.safetyCounts[r.safety_feeling] || 0) + 1;
         if(r.community_mood) l.moodCounts[r.community_mood] = (l.moodCounts[r.community_mood] || 0) + 1;
         
-        if(r.violence_witnessed_binary === 1) l.violCounts.yes++; else l.violCounts.no++;
-        if(r.tensions_noticed_binary === 1) l.tensCounts.yes++; else l.tensCounts.no++;
+        // FIX: Strict Number check for binary parsing
+        if(Number(r.violence_witnessed_binary) === 1) l.violCounts.yes++; else l.violCounts.no++;
+        if(Number(r.tensions_noticed_binary) === 1) l.tensCounts.yes++; else l.tensCounts.no++;
     });
 
-    // Calculate final indices per LGA
     Object.values(lgaMap).forEach(l => {
         l.avgSafe = l.total > 0 ? (l.sumSafety / l.total) : 0;
         l.pctViol = l.total > 0 ? (l.sumViol / l.total) * 100 : 0;
@@ -357,7 +355,8 @@ function renderCharts(data) {
 
     } else {
         if(charts.safety) charts.safety.destroy();
-        let safeOrder = ['very_unsafe', 'unsafe', 'neutral', 'safe', 'very_safe'];
+        // FIX: Updated exact text matching array
+        let safeOrder = ['very_unsafe', 'somewhat_unsafe', 'neutral', 'somewhat_safe', 'very_safe', 'not_sure'];
         let safeData = safeOrder.map(k => data.safetyCounts[k] || 0);
         charts.safety = new Chart(document.getElementById('safetyChart'), {
             type: 'bar',
