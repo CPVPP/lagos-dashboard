@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LGA Whitelist Troubleshooter</title>
+    <style>
+        body { background: #111; color: #ccc; font-family: 'Courier New', monospace; padding: 20px; line-height: 1.6; }
+        h2 { color: #fff; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        h3 { color: #00cc44; margin-top: 20px; }
+        .red { color: #ff6b6b; font-weight: bold; }
+        .yellow { color: #fee08b; }
+        .green { color: #00cc44; }
+        .box { background: #222; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #333; }
+        ul { margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h2>LGA Whitelist Diagnostic Tool</h2>
+    <div id="output">Fetching all 9,000+ rows to check LGAs... Please wait...</div>
+
+    <script src="config.js"></script>
+    <script>
+        // The exact whitelist from our app.js
+        const VALID_LGAS = new Set([
+            "agege", "ajeromiifelodun", "alimosho", "amuwoodofin", "apapa",
+            "badagry", "epe", "etiosa", "ibejulekki", "ifakoijaiye", "ifakoijaye", 
+            "ikeja", "ikorodu", "kosofe", "lagosisland", "lagosmainland",
+            "mushin", "ojo", "oshodiisolo", "shomolu", "surulere"
+        ]);
+
+        function normalizeLGA(name) {
+            if (!name) return "";
+            return name.toLowerCase().replace(/[- \/]/g, "");
+        }
+
+        async function runDiagnostics() {
+            const out = document.getElementById('output');
+            let allData = [];
+            let offset = 0;
+            const limit = 1000; 
+            let keepFetching = true;
+
+            try {
+                // Fetch all data
+                while (keepFetching) {
+                    const response = await fetch(
+                        `${CONFIG.SUPABASE_URL}/rest/v1/${CONFIG.TABLE}?select=lga_normalized&limit=${limit}&offset=${offset}`,
+                        { headers: { apikey: CONFIG.SUPABASE_ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}` } }
+                    );
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    const chunk = await response.json();
+                    allData = allData.concat(chunk);
+                    if (chunk.length < limit) keepFetching = false;
+                    else offset += limit;
+                }
+
+                // Analyze LGAs
+                const rawLgasInDb = new Set();
+                const normalizedLgasInDb = new Set();
+
+                allData.forEach(row => {
+                    if (row.lga_normalized) {
+                        rawLgasInDb.add(row.lga_normalized);
+                        normalizedLgasInDb.add(normalizeLGA(row.lga_normalized));
+                    }
+                });
+
+                // Find what's missing and what's blocked
+                const blockedLgas = [];
+                rawLgasInDb.forEach(rawName => {
+                    if (!VALID_LGAS.has(normalizeLGA(rawName))) {
+                        blockedLgas.push(rawName);
+                    }
+                });
+
+                const missingLgas = [];
+                // We use a clean array of the standard 20 to check what is missing from the DB
+                const standard20 = [
+                    "agege", "ajeromiifelodun", "alimosho", "amuwoodofin", "apapa",
+                    "badagry", "epe", "etiosa", "ibejulekki", "ifakoijaiye",
+                    "ikeja", "ikorodu", "kosofe", "lagosisland", "lagosmainland",
+                    "mushin", "ojo", "oshodiisolo", "shomolu", "surulere"
+                ];
+                
+                standard20.forEach(lga => {
+                    if (!normalizedLgasInDb.has(lga) && !normalizedLgasInDb.has(lga.replace('ijaiye', 'ijaye'))) {
+                        missingLgas.push(lga);
+                    }
+                });
+
+                // Render Results
+                let html = `
+                    <div class="box">
+                        <h3>1. Database Summary</h3>
+                        Total Rows Scanned: <span class="green">${allData.length}</span><br>
+                        Total Unique LGAs Found: <span class="green">${rawLgasInDb.size}</span>
+                    </div>
+
+                    <div class="box border-red">
+                        <h3 class="red">2. The "Missing" LGAs (Why it says 19/20)</h3>
+                        <p>These valid Lagos LGAs have <b>ZERO</b> matches in your database. Either no one surveyed there, or it is spelled weirdly in the DB (see Section 3).</p>
+                        <ul>
+                            ${missingLgas.length > 0 ? missingLgas.map(l => `<li class="red">${l.toUpperCase()}</li>`).join('') : '<li class="green">None! All 20 are present.</li>'}
+                        </ul>
+                    </div>
+
+                    <div class="box">
+                        <h3 class="yellow">3. Blocked / Unmapped LGAs</h3>
+                        <p>These LGAs exist in your database, but the dashboard is throwing them away because they don't match our strict whitelist exactly.</p>
+                        <ul>
+                            ${blockedLgas.length > 0 ? blockedLgas.map(l => `<li class="yellow">${l}</li>`).join('') : '<li>None</li>'}
+                        </ul>
+                    </div>
+                `;
+
+                out.innerHTML = html;
+
+            } catch (err) {
+                out.innerHTML = `<h3 class="red">Error: ${err.message}</h3>`;
+            }
+        }
+        
+        runDiagnostics();
+    </script>
+</body>
+</html>
